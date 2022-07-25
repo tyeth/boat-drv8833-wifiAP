@@ -16,3 +16,6 @@
 [SSL.combined](https://www.gundryconsultancy.com/ssl.combined)
 
 [SSL.everything](https://www.gundryconsultancy.com/ssl.everything)
+
+
+You'll want to run tinydns or some other dns service on the microcontroller / wifi access point.
