@@ -59,29 +59,30 @@ print("       Subnet:", wifi.radio.ipv4_subnet_ap)
 HOST = str(wifi.radio.ipv4_address_ap)
 
 print("Create TCP Server socket", (HOST, PORT))
-s = pool.socket(pool.AF_INET, pool.SOCK_STREAM)
-s.settimeout(TIMEOUT)
+poolSocket = pool.socket(pool.AF_INET, pool.SOCK_STREAM)
+ssl_context = ssl.create_default_context() # purpose=ssl.Purpose.SERVER_AUTH) # .SSLContext(ssl.PROTOCOL_TLS)
+ssl_context.check_hostname = False
+#ssl_context.load_cert_chain(certfile="cert.pem", keyfile="key.pem")
+clientSslSocket = ssl_context.wrap_socket(poolSocket, server_side=True)
 
-s.bind((HOST, PORT))
-s.listen(BACKLOG)
+clientSslSocket.settimeout(TIMEOUT)
+
+clientSslSocket.bind((HOST, PORT))
+clientSslSocket.listen(BACKLOG)
 print("Listening")
 
 inbuf = bytearray(MAXBUF)
 counter=0
 while True:
     print("Accepting connections")
-    conn, addr = s.accept()
+    conn, addr = clientSslSocket.accept()
    
-    client_s = conn
+    clientSslSocket = conn
     client_addr = addr
     print("Client address:", client_addr)
-    print("Client socket:", client_s)
-    ssl_context = ssl.create_default_context() # purpose=ssl.Purpose.SERVER_AUTH) # .SSLContext(ssl.PROTOCOL_TLS)
-    ssl_context.check_hostname = False
-    #ssl_context.load_cert_chain(certfile="cert.pem", keyfile="key.pem")
-    client_s = ssl_context.wrap_socket(client_s, server_side=True)
+    print("Client socket:", clientSslSocket)
     
-    print(client_s)
+    print(clientSslSocket)
     print("Request:")
     if True: #use_stream:
         # Both CPython and MicroPython SSLSocket objects support read() and
@@ -91,16 +92,16 @@ while True:
         # next request they issue will likely be more well-behaving and
         # will succeed.
         try:
-            req = client_s.read(4096)
+            req = clientSslSocket.read(4096)
             print(req)
             if req:
-                client_s.write(CONTENT % counter)
+                clientSslSocket.write(CONTENT % counter)
         except Exception as e:
             print("Exception serving request:", e)
     else:
-        print(client_s.recv(4096))
-        client_s.send(CONTENT % counter)
-    client_s.close()
+        print(clientSslSocket.recv(4096))
+        clientSslSocket.send(CONTENT % counter)
+    clientSslSocket.close()
     counter += 1
     print()
 
