@@ -67,7 +67,7 @@ def adjustMotors(along,up):
     # Actually move the motors
     move_motors(left_motor, right_motor)
     print("engineAdjust!",along,up)
-    return ("200 OK", [], "engineAdjusted!" + along + "," + up)
+    return ("200 OK", [], "engineAdjusted!" + along + "," + up + "\r\nleft:" + str(left_motor) + " right:" + str(right_motor))
 
 
 
