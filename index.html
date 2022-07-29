@@ -53,6 +53,7 @@ body
 		<script src="joy.js"></script>
 	</head>
 	<body>
+		<button onclick="javascript:toggleAutoReturnToCenter()">Toggle RETURN TO CENTER</button>
 		<!-- Example of FIXED or ABSOLUTE position -->
 		<div id="joy3Div" style="width:60vw;height:60vh;margin:45px;"></div>
 		<div style="position:fixed;bottom:125px;left:750px;">
@@ -62,26 +63,44 @@ body
 			X :<input id="joy3X" type="text" /></br>
 			Y :<input id="joy3Y" type="text" />
 		</div>
-		<iframe height="100" width="100" id="iframe1">  </iframe>
+		
+		<div height="100" width="100" id="iframe1"></div>
 		<script type="text/javascript" defer="defer">
-var joy3Param = { "title": "joystick3", "autoReturnToCenter": false  };
-var Joy3 = new JoyStick('joy3Div', joy3Param);
+			function init(){
 
-var joy3IinputPosX = document.getElementById("joy3PosizioneX");
-var joy3InputPosY = document.getElementById("joy3PosizioneY");
-var joy3Direzione = document.getElementById("joy3Direzione");
-var joy3X = document.getElementById("joy3X");
-var joy3Y = document.getElementById("joy3Y");
-var iframe1 = document.getElementById("iframe1");
+				var joy3Param = { "title": "joystick3", "autoReturnToCenter": window.autoReturnToCenter || false  };
+				var Joy3 = new JoyStick('joy3Div', joy3Param);
 
-setInterval(function(){ 
-    joy3IinputPosX.value=Joy3.GetPosX(); 
-    joy3InputPosY.value=Joy3.GetPosY(); 
-    joy3Direzione.value=Joy3.GetDir(); 
-    joy3X.value=Joy3.GetX();
-    joy3Y.value=Joy3.GetY();
-    iframe1.src="/coords/"+Joy3.GetX()+"/"+Joy3.GetY();
-}, 200);
+				var joy3IinputPosX = document.getElementById("joy3PosizioneX");
+				var joy3InputPosY = document.getElementById("joy3PosizioneY");
+				var joy3Direzione = document.getElementById("joy3Direzione");
+				var joy3X = document.getElementById("joy3X");
+				var joy3Y = document.getElementById("joy3Y");
+				var iframe1 = document.getElementById("iframe1");
+
+				window.joyInterval = setInterval(function(){ 
+					joy3IinputPosX.value=Joy3.GetPosX(); 
+					joy3InputPosY.value=Joy3.GetPosY(); 
+					joy3Direzione.value=Joy3.GetDir(); 
+					oldXY = {x: joy3X.value, y: joy3Y.value};
+					joy3X.value=Joy3.GetX();
+					joy3Y.value=Joy3.GetY();
+					if(oldXY.x!=joy3X.value || oldXY.y!=joy3Y.value){
+						if(iframe1.children.length>0)iframe1.children[0].remove();
+						let iframe = document.createElement("iframe");
+						iframe.src="/coords/"+Joy3.GetX()+"/"+Joy3.GetY();
+						iframe1.appendChild(iframe);
+					}
+				}, 250);
+			}
+			init();
+
+			function toggleAutoReturnToCenter(){
+				window.autoReturnToCenter = !window.autoReturnToCenter || true;
+				clearInterval(window.joyInterval);
+				document.getElementById("joy3Div").innerHTML="";
+				init();
+			}
 		</script>
 	</body>
 </html>

@@ -88,9 +88,7 @@ def led_off(request):  # pylint: disable=unused-argument
 
 @web_app.route("/coords/<x>/<y>")
 def engineAdjust(request,x,y):
-    print("engineAdjust!")
-    print(x)
-    print(y)
+    print("engineAdjust!",x,y)
     return ("200 OK", [], "engineAdjusted!" + x + "," + y)
 
 @web_app.route("/", methods=["GET"])
@@ -119,6 +117,7 @@ while True:
     try:
         wsgiServer.update_poll()
         # Could do any other background tasks here, like reading sensors
+        
     except (ValueError, RuntimeError) as e:
         print("Failed to update server, restarting ESP32\n", e)
         wifi.reset()
