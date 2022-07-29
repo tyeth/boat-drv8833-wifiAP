@@ -11,10 +11,12 @@
 # the maximum number of connected stations is currently 4
 
 def js_page():
-    return open('joy.js','rb').read()
+    return open("joy.js","rb").read()
 
 def web_page():
-  return open('index.html','rb').read()
+    return open("index.html","rb").read()
+
+
 
 
 #import urllib.parse
@@ -77,7 +79,7 @@ print("Listening")
 
 inbuf = bytearray(MAXBUF)
 while True:
-  try:
+  #try:
     print("Accepting connections")
     conn, addr = s.accept()
     conn.settimeout(TIMEOUT)
@@ -93,8 +95,8 @@ while True:
     qs = circuitpython_parse.parse_qs(qs)
     path=path.lower()
     
-    if(path=="/"):
-
+    if(path == None or path=="/" or path==""):
+      print("Path is empty, sending index.html")
       if(qs and "test" in qs.keys()):
         test = qs["test"]
         print(test)
@@ -103,7 +105,7 @@ while True:
         outbuf=b"HTTP/1.0 200 OK\r\n" + \
           b"Connection: close\r\n" + \
           b"\r\n" + \
-          b"\r\n"
+          b"OK\r\n"
         #   b"<html>"+ web_page() + \
         #   b"<hr style=\"margin: " +  bytes(str(50 * int(test[0])),'utf8') + b"px ;background-color:rgba(0,0," +  bytes(str(255 * int(test[0])),'utf8') + b",1);\"><pre>" + \
         #   inbuf[:size] + \
@@ -118,11 +120,11 @@ while True:
         #   b"</pre></html>"
 
     elif(path=="/joy.js"):
-        #
+        
         outbuf = b"HTTP/1.0 200 OK\r\n" + \
               b"Connection: close\r\n" + \
               b"\r\n" + \
-              js_page()
+              open('joy.js','rb').read() #      js_page()
 
     else:
         outbuf = b"HTTP/1.0 404 Not Found\r\n" + \
@@ -134,8 +136,8 @@ while True:
     print("Sent", len(outbuf), "bytes")
 
     conn.close()
-  except:
-    conn.close()
+  #except:
+  #  conn.close()
 
 # the rest is exercise left for the reader, could try some socket stuff
 # (some examples at <https://github.com/anecdata/Socket>)

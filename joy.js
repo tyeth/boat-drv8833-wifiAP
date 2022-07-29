@@ -1,60 +1,4 @@
-/*
- * Name          : joy.js
- * @author       : Roberto D'Amico (Bobboteck)
- * Last modified : 09.06.2020
- * Revision      : 1.1.6
- *
- * Modification History:
- * Date         Version     Modified By		Description
- * 2022-07-29   1.1.6-1     Tyeth Gundry    Capped X/Y at 100, changed touch detect, fixed widescreen.
- * 2020-06-09	1.1.6		Roberto D'Amico	Fixed Issue #10 and #11
- * 2020-04-20	1.1.5		Roberto D'Amico	Correct: Two sticks in a row, thanks to @liamw9534 for the suggestion
- * 2020-04-03               Roberto D'Amico Correct: InternalRadius when change the size of canvas, thanks to @vanslipon for the suggestion
- * 2020-01-07	1.1.4		Roberto D'Amico Close #6 by implementing a new parameter to set the functionality of auto-return to 0 position
- * 2019-11-18	1.1.3		Roberto D'Amico	Close #5 correct indication of East direction
- * 2019-11-12   1.1.2       Roberto D'Amico Removed Fix #4 incorrectly introduced and restored operation with touch devices
- * 2019-11-12   1.1.1       Roberto D'Amico Fixed Issue #4 - Now JoyStick work in any position in the page, not only at 0,0
- * 
- * The MIT License (MIT)
- *
- *  This file is part of the JoyStick Project (https://github.com/bobboteck/JoyStick).
- *	Copyright (c) 2015 Roberto D'Amico (Bobboteck).
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
- 
-/**
- * @desc Principal object that draw a joystick, you only need to initialize the object and suggest the HTML container
- * @costructor
- * @param container {String} - HTML object that contains the Joystick
- * @param parameters (optional) - object with following keys:
- *	title {String} (optional) - The ID of canvas (Default value is 'joystick')
- * 	width {Int} (optional) - The width of canvas, if not specified is setted at width of container object (Default value is the width of container object)
- * 	height {Int} (optional) - The height of canvas, if not specified is setted at height of container object (Default value is the height of container object)
- * 	internalFillColor {String} (optional) - Internal color of Stick (Default value is '#00AA00')
- * 	internalLineWidth {Int} (optional) - Border width of Stick (Default value is 2)
- * 	internalStrokeColor {String}(optional) - Border color of Stick (Default value is '#003300')
- * 	externalLineWidth {Int} (optional) - External reference circonference width (Default value is 2)
- * 	externalStrokeColor {String} (optional) - External reference circonference color (Default value is '#008000')
- * 	autoReturnToCenter {Bool} (optional) - Sets the behavior of the stick, whether or not, it should return to zero position when released (Default value is True and return to zero)
- */
- var JoyStick = (function(container, parameters)
+var JoyStick = (function(container, parameters)
  {
      parameters = parameters || {};
      var title = (typeof parameters.title === "undefined" ? "joystick" : parameters.title),
@@ -135,13 +79,6 @@
      drawExternal();
      drawInternal();
  
-     /******************************************************
-      * Private methods
-      *****************************************************/
- 
-     /**
-      * @desc Draw the external circle used as reference position
-      */
      function drawExternal()
      {
          context.beginPath();
@@ -150,10 +87,7 @@
          context.strokeStyle = externalStrokeColor;
          context.stroke();
      }
- 
-     /**
-      * @desc Draw the internal stick in the current position the user have moved it
-      */
+  
      function drawInternal()
      {
          context.beginPath();
@@ -174,10 +108,7 @@
          context.strokeStyle = internalStrokeColor;
          context.stroke();
      }
-     
-     /**
-      * @desc Events for manage touch
-      */
+      
      function onTouchStart(event) 
      {
          pressed = 1;
@@ -227,9 +158,7 @@
          //canvas.unbind('touchmove');
      }
  
-     /**
-      * @desc Events for manage mouse
-      */
+ 
      function onMouseDown(event) 
      {
          pressed = 1;
@@ -277,68 +206,40 @@
          //canvas.unbind('mousemove');
      }
  
-     /******************************************************
-      * Public methods
-      *****************************************************/
-     
-     /**
-      * @desc The width of canvas
-      * @return Number of pixel width 
-      */
+ 
      this.GetWidth = function () 
      {
          return canvas.width;
      };
-     
-     /**
-      * @desc The height of canvas
-      * @return Number of pixel height
-      */
+      
      this.GetHeight = function () 
      {
          return canvas.height;
      };
-     
-     /**
-      * @desc The X position of the cursor relative to the canvas that contains it and to its dimensions
-      * @return Number that indicate relative position
-      */
+      
      this.GetPosX = function ()
      {
          return movedX;
      };
      
-     /**
-      * @desc The Y position of the cursor relative to the canvas that contains it and to its dimensions
-      * @return Number that indicate relative position
-      */
+     
      this.GetPosY = function ()
      {
          return movedY;
      };
      
-     /**
-      * @desc Normalizzed value of X move of stick
-      * @return Integer from -100 to +100
-      */
+    
      this.GetX = function ()
      {
          return Math.max(-100,Math.min(100, (100*((movedX - centerX)/maxMoveStick)))).toFixed();
      };
  
-     /**
-      * @desc Normalizzed value of Y move of stick
-      * @return Integer from -100 to +100
-      */
+     
      this.GetY = function ()
      {
          return Math.max(-100,Math.min(100, ((100*((movedY - centerY)/maxMoveStick))*-1))).toFixed();
      };
-     
-     /**
-      * @desc Get the direction of the cursor as a string that indicates the cardinal points where this is oriented
-      * @return String of cardinal point N, NE, E, SE, S, SW, W, NW and C when it is placed in the center
-      */
+      
      this.GetDir = function()
      {
          var result = "";
