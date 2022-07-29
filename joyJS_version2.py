@@ -10,10 +10,11 @@
 #
 # the maximum number of connected stations is currently 4
 
+def js_page():
+    return open('joy.js','rb').read()
+
 def web_page():
-  return open('index.html', 'r').read()
-
-
+  return open('index.html','rb').read()
 
 
 #import urllib.parse
@@ -110,18 +111,18 @@ while True:
       else:
         outbuf = b"HTTP/1.0 200 OK\r\n" + \
           b"Connection: close\r\n" + \
-          b"\r\n" + \
-          b"<html>"+ web_page() + \
-          b"<hr><pre>" + \
-          inbuf[:size] + \
-          b"</pre></html>"
+          b"\r\n" + web_page() #\
+        #   b"<html>"+ web_page() + \
+        #   b"<hr><pre>" + \
+        #   inbuf[:size] + \
+        #   b"</pre></html>"
 
     elif(path=="/joy.js"):
-        open('joy.js','rb').read()
+        #
         outbuf = b"HTTP/1.0 200 OK\r\n" + \
               b"Connection: close\r\n" + \
               b"\r\n" + \
-              outbuf
+              js_page()
 
     else:
         outbuf = b"HTTP/1.0 404 Not Found\r\n" + \

@@ -29,7 +29,7 @@
 		<meta charset="utf-8">
 		<meta name="description" content="Example page of use pure Javascript JoyStick">
 		<meta name="author" content="Roberto D'Amico">
-		<link rel="shortcut icon" type="image/png" href="https://bobboteck.github.io/img/roberto-damico-bobboteck.png">
+		<!-- <link rel="shortcut icon" type="image/png" href="https://bobboteck.github.io/img/roberto-damico-bobboteck.png"> -->
 		<style>
 *
 {
@@ -62,8 +62,8 @@ body
 			X :<input id="joy3X" type="text" /></br>
 			Y :<input id="joy3Y" type="text" />
 		</div>
-		
-		<script type="text/javascript">
+		<iframe height="1" width="1" id="iframe1">  </iframe>
+		<script type="text/javascript" defer="defer">
 var joy3Param = { "title": "joystick3", "autoReturnToCenter": false  };
 var Joy3 = new JoyStick('joy3Div', joy3Param);
 
@@ -72,12 +72,15 @@ var joy3InputPosY = document.getElementById("joy3PosizioneY");
 var joy3Direzione = document.getElementById("joy3Direzione");
 var joy3X = document.getElementById("joy3X");
 var joy3Y = document.getElementById("joy3Y");
-
-setInterval(function(){ joy3IinputPosX.value=Joy3.GetPosX(); }, 50);
-setInterval(function(){ joy3InputPosY.value=Joy3.GetPosY(); }, 50);
-setInterval(function(){ joy3Direzione.value=Joy3.GetDir(); }, 50);
-setInterval(function(){ joy3X.value=Joy3.GetX(); }, 50);
-setInterval(function(){ joy3Y.value=Joy3.GetY(); }, 50);
+var iframe1 = document.getElementById("iframe1");
+setInterval(function(){ 
+    joy3IinputPosX.value=Joy3.GetPosX(); 
+    joy3InputPosY.value=Joy3.GetPosY(); 
+    joy3Direzione.value=Joy3.GetDir(); 
+    joy3X.value=Joy3.GetX();
+    joy3Y.value=Joy3.GetY();
+    iframe1.src="/?test=1&x="+Joy3.GetX()+"&y="+Joy3.GetY();
+}, 200);
 		</script>
 	</body>
 </html>
