@@ -68,7 +68,7 @@ body
 		<script type="text/javascript" defer="defer">
 			function init(){
 
-				var joy3Param = { "title": "joystick3", "autoReturnToCenter": window.autoReturnToCenter || false  };
+				var joy3Param = { "title": "joystick3", "autoReturnToCenter": window.autoReturnToCenter || true  };
 				var Joy3 = new JoyStick('joy3Div', joy3Param);
 
 				var joy3IinputPosX = document.getElementById("joy3PosizioneX");
@@ -96,7 +96,7 @@ body
 			init();
 
 			function toggleAutoReturnToCenter(){
-				window.autoReturnToCenter = !window.autoReturnToCenter || true;
+				window.autoReturnToCenter = !window.autoReturnToCenter || false;
 				clearInterval(window.joyInterval);
 				document.getElementById("joy3Div").innerHTML="";
 				init();
