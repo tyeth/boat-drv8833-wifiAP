@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
+## USES wsgiserver for circuitpython7.x from https://github.com/tyeth/circuitpython-native-wsgiserver/suites/7591102025/artifacts/314407175
+
 import pwmio
 import board
 import busio
