@@ -56,7 +56,7 @@ body
 		<button onclick="javascript:toggleAutoReturnToCenter()">Toggle RETURN TO CENTER</button>
 		<!-- Example of FIXED or ABSOLUTE position -->
 		<div id="joy3Div" style="width:60vw;height:60vh;margin:45px;"></div>
-		<div style="position:fixed;bottom:125px;left:750px;">
+		<div style="position:fixed;bottom:125px;left:180px;">
 			Posizione X:<input id="joy3PosizioneX" type="text" /><br />
 			Posizione Y:<input id="joy3PosizioneY" type="text" /><br />
 			Direzione:<input id="joy3Direzione" type="text" /><br />
@@ -90,6 +90,7 @@ body
 						let iframe = document.createElement("iframe");
 						iframe.src="/coords/"+Joy3.GetX()+"/"+Joy3.GetY();
 						iframe1.appendChild(iframe);
+
 					}
 				}, 250);
 			}
