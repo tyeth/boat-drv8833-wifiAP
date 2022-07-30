@@ -35,6 +35,8 @@ pwm_b2 = pwmio.PWMOut(board.RX, frequency=50)
 
 m1 = motor.DCMotor(pwm_a1, pwm_a2)
 m2 = motor.DCMotor(pwm_b1, pwm_b2)
+m1.decay_mode = motor.SLOW_DECAY
+m2.decay_mode = motor.SLOW_DECAY
 
 def adjustMotors(along,up):
     print("x: ",along,"y: ",up)
@@ -165,16 +167,12 @@ def index(request):
     return ("200 OK", [], open("joy.js", "r").read())
 
 
-# Here we setup our server, passing in our web_app as the application
-#server.set_interface(esp)
-#wsgiServer = server.WSGIServer(80, application=web_app)
-
-#server.set_interface(wifi.radio)
-HOST = repr(wifi.radio.ipv4_address_ap)
+HOST = repr(wifi.radio.ipv4_address if wifi.radio.ipv4_address else wifi.radio.ipv4_address_ap)
 PORT = 80  # Port to listen on
 wsgiServer = server.WSGIServer(PORT, application=web_app)
 print(HOST, PORT)
 print("open this IP in your browser: ", wsgiServer.pretty_ip())
+
 
 # print(esp.get_time())
 # Start the server
@@ -190,3 +188,7 @@ while True:
     #     wifi.reset()
     #     continue
 
+
+
+print("Stopping the AP...")
+wifi.radio.stop_ap()  # close down the shop
