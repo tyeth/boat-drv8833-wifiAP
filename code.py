@@ -1,215 +1,194 @@
-# ESP32-S2 wifi radio SoftAP changes:
-#
-# the key concept is `mode`, one of: Station (STA), Access Point (AP), STA+AP, (NONE)
-# before now, ESP32-S2 wifi was always in Station mode, ready to scan or connect to an AP
-# now Station and AP can be independently controlled, and the ESP32-S2 can be either, both, or neither
-# note that AP mode isn't a router; it's typically going to be an IP server endpoint to IP clients
-#
-# mode is also independent of `enabled` state, which turns wifi on or off
-# mode can be changed when wifi is enabled or not enabled
-#
-# the maximum number of connected stations is currently 4
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
 
-def web_page():
-  html = """
-<!-- <!DOCTYPE html>
-# <html lang="en">-->
-<head>
-    <meta charset="UTF-8">
-    <title>MDN Accelerometer Demo</title>
+import pwmio
+import board
+import busio
+from digitalio import DigitalInOut
+import neopixel
 
-    <style>
-    .garden {
-  position: relative;
-  width : 200px;
-  height: 200px;
-  border: 5px solid #CCC;
-  border-radius: 10px;
-}
-
-.ball {
-  position: absolute;
-  top   : 90px;
-  left  : 90px;
-  width : 20px;
-  height: 20px;
-  background: green;
-  border-radius: 100%;
-}
-
-    </style>
-
-<script>    
-var ball   = document.querySelector('.ball');
-var garden = document.querySelector('.garden');
-var output = document.querySelector('.output');
-
-var maxX = garden.clientWidth  - ball.clientWidth;
-var maxY = garden.clientHeight - ball.clientHeight;
-
-function handleOrientation(event) {
-  var x = event.beta;  // In degree in the range [-180,180)
-  var y = event.gamma; // In degree in the range [-90,90)
-
-  output.textContent  = `beta : ${x}\n`;
-  output.textContent += `gamma: ${y}\n`;
-
-  // Because we don't want to have the device upside down
-  // We constrain the x value to the range [-90,90]
-  if (x >  90) { x =  90};
-  if (x < -90) { x = -90};
-
-  // To make computation easier we shift the range of
-  // x and y to [0,180]
-  x += 90;
-  y += 90;
-
-  // 10 is half the size of the ball
-  // It center the positioning point to the center of the ball
-  ball.style.top  = (maxY*y/180 - 10) + "px";
-  ball.style.left = (maxX*x/180 - 10) + "px";
-}
-
-window.addEventListener('deviceorientation', handleOrientation);
+import adafruit_motor.motor as motor
 
 
-</script>
-
-
-</head>
-<body style="background-color:lightblue;">
-
-<div class="garden">
-  <div class="ball"></div>
-</div>
-
-<pre class="output"></pre>
-</body>
-<!-- </html> -->
-"""
-
-  return html
-
-
-
-
-#import urllib.parse
 import wifi
-import ipaddress
-import socketpool
-import time
+import wsgiserver as server
+#from adafruit_esp32spi import adafruit_esp32spi
+# import adafruit_esp32spi.adafruit_esp32spi_wifimanager as wifimanager
+# import adafruit_esp32spi.adafruit_esp32spi_wsgiserver as server
+from adafruit_wsgi.wsgi_app import WSGIApp , Request
 
-import circuitpython_parse
+secrets={}
+secrets["ssid"]="free4all_2G"
+secrets["password"]="password"
 
-#from secrets import secrets
+# Get wifi details and more from a secrets.py file
+# try:
+#     from secrets import secrets
+# except ImportError:
+#     print("WiFi secrets are kept in secrets.py, please add them there!")
+#     raise
 
-# at this point, the ESP32-S2 is running as a station (init default), and if desired can connect to any AP
+pwm_a1 = pwmio.PWMOut(board.MOSI, frequency=50)
+pwm_a2 = pwmio.PWMOut(board.MISO, frequency=50)
+pwm_b1 = pwmio.PWMOut(board.SCK, frequency=50)
+pwm_b2 = pwmio.PWMOut(board.RX, frequency=50)
 
-# the following two lines are not new APIs, but they are useful to test in combination with mode changes:
-wifi.radio.enabled = False  # turns wifi off, mode is retained or can be changed while not enabled
-wifi.radio.enabled = True  # turns wifi back on
-print("Wi-Fi Enabled?", wifi.radio.enabled)
+m1 = motor.DCMotor(pwm_a1, pwm_a2)
+m2 = motor.DCMotor(pwm_b1, pwm_b2)
+m1.decay_mode = motor.SLOW_DECAY
+m2.decay_mode = motor.SLOW_DECAY
 
-print(dir(wifi.radio))  # useful reference
+def adjustMotors(along,up):
+    print("x: ",along,"y: ",up)
+    left_right = int(along)
+    front_back = int(up)
+    
+    print(front_back+left_right)
+    print(front_back-left_right)
+    left_motor = front_back + left_right
+    right_motor = front_back - left_right
+    
+    # Scale factor defaults to 1
+    scale_factor = 1.0
+    
+    # Calculate scale factor
+    if abs(left_motor) > 100 or abs(right_motor) > 100:
+        # Find highest of the 2 values, since both could be above 100
+        print(abs(left_motor),abs(right_motor))
+        x = max(abs(left_motor), abs(right_motor))
+    
+        # Calculate scale factor
+        scale_factor = 100.0 / x
+    
+    print("scale",scale_factor)
 
-print("Stopping the (default) station...")
+    # Use scale factor, and turn values back into integers
+    left_motor = float( int(left_motor * scale_factor) /100.0)
+    right_motor = float( int(right_motor * scale_factor) /100.0)
+    
+    # Actually move the motors
+    move_motors(left_motor, right_motor)
+    print("engineAdjust!",along,up)
+    return ("200 OK", [], "engineAdjusted!" + along + "," + up + "\r\nleft:" + str(left_motor) + " right:" + str(right_motor))
+
+
+
+def move_motors(left_motor, right_motor):
+    print("left_motor: ", left_motor)
+    print("right_motor: ", right_motor)
+    m1.throttle=left_motor
+    m2.throttle=right_motor
+
+# This example depends on a WSGI Server to run.
+# We are using the wsgi server made for the ESP32
+
+print("ESP32 SPI simple web app test!")
+
+
+# If you are using a board with pre-defined ESP32 Pins:
+# esp32_cs = DigitalInOut(board.ESP_CS)
+# esp32_ready = DigitalInOut(board.ESP_BUSY)
+# esp32_reset = DigitalInOut(board.ESP_RESET)
+
+# If you have an externally connected ESP32:
+# esp32_cs = DigitalInOut(board.D9)
+# esp32_ready = DigitalInOut(board.D10)
+# esp32_reset = DigitalInOut(board.D5)
+
+# spi = busio.SPI(board.SCK, board.MOSI, board.MISO)
+# esp = adafruit_esp32spi.ESP_SPIcontrol(
+#     spi, esp32_cs, esp32_ready, esp32_reset
+# )  # pylint: disable=line-too-long
+
+"""Use below for Most Boards"""
+status_light = neopixel.NeoPixel(
+    board.NEOPIXEL, 1, brightness=0.2
+)  # Uncomment for Most Boards
+"""Uncomment below for ItsyBitsy M4"""
+# import adafruit_dotstar as dotstar
+# status_light = dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1, brightness=1)
+
+## If you want to connect to wifi with secrets:
+#wifi = wifimanager.ESPSPI_WiFiManager(esp, secrets, status_light, debug=True)
+#wifi.radio.connect(secrets["ssid"], secrets["password"])
+
+## If you want to create a WIFI hotspot to connect to with secrets:
+
+secrets = {"ssid": "CircuitPython-AP", "password": "password"}
+
+# wifi = wifimanager.ESPSPI_WiFiManager(esp, secrets, status_light)
+# wifi.create_ap()
+
+wifi.radio.enabled=False
+wifi.radio.enabled=True
+
 wifi.radio.stop_station()  # now the device is in NONE mode, neither Station nor Access Point
 # print("(Re-)Starting the station...")
 # wifi.radio.start_station()  # would restart the station and later you would have both Station and AP running
 
-# start the AP, `channel` of your choosing, `authmode` of your choosing:
-# The Access Point IP address will be 192.168.4.1
-# ...if that collides with your LAN, you may need to isolate the external station from your LAN
-print("Starting AP...")
-ssid = 'CircuitPython-AP'
-password = 'password'
-wifi.radio.start_ap(ssid=ssid, password=password, channel = 13, max_connections = 4)#,authmode=WPA2)
-
-# connect from some client(s), check their interfaces to verify the wi-fi is connected, channel, authmode,...
+wifi.radio.start_ap(secrets["ssid"], secrets["password"],channel=12)
 
 
-# Fudge an HTTP response back to a browser on a connected wifi station
-HOST = ""  # see below
-PORT = 80
-TIMEOUT = None
-BACKLOG = 2
-MAXBUF = 1024
+## To you want to create an un-protected WIFI hotspot to connect to with secrets:"
+# secrets = {"ssid": "My ESP32 AP!"}
+# wifi = wifimanager.ESPSPI_WiFiManager(esp, secrets, status_light)
+# wifi.create_ap()
 
-# get some sockets
-pool = socketpool.SocketPool(wifi.radio)
+# Here we create our application, registering the
+# following functions to be called on specific HTTP GET requests routes
 
-print("AP IP Address:", wifi.radio.ipv4_address_ap)
-print("      Gateway:", wifi.radio.ipv4_gateway_ap)
-print("       Subnet:", wifi.radio.ipv4_subnet_ap)
-HOST = str(wifi.radio.ipv4_address_ap)
+web_app = WSGIApp()
 
-print("Create TCP Server socket", (HOST, PORT))
-s = pool.socket(pool.AF_INET, pool.SOCK_STREAM)
-s.settimeout(TIMEOUT)
 
-s.bind((HOST, PORT))
-s.listen(BACKLOG)
-print("Listening")
+@web_app.route("/led_on/<r>/<g>/<b>/<w>")
+def led_on(request, r, g, b, w):  # pylint: disable=unused-argument
+    print("led on!")
+    status_light.fill((int(r), int(g), int(b),1))
+    return ("200 OK", [], "led on!")
 
-inbuf = bytearray(MAXBUF)
+
+@web_app.route("/led_off")
+def led_off(request):  # pylint: disable=unused-argument
+    print("led off!")
+    status_light.fill(0)
+    return ("200 OK", [], "led off!")
+
+@web_app.route("/coords/<x>/<y>")
+def engineAdjust(request,x,y):
+    return adjustMotors(x,y)
+    
+
+@web_app.route("/", methods=["GET"])
+def index(request):
+    return ("200 OK", [], open("index.html", "r").read())
+
+@web_app.route("/joy.js", methods=["GET"])
+def index(request):
+    return ("200 OK", [], open("joy.js", "r").read())
+
+
+HOST = repr(wifi.radio.ipv4_address if wifi.radio.ipv4_address else wifi.radio.ipv4_address_ap)
+PORT = 80  # Port to listen on
+wsgiServer = server.WSGIServer(PORT, application=web_app)
+print(HOST, PORT)
+print("open this IP in your browser: ", wsgiServer.pretty_ip())
+
+
+# print(esp.get_time())
+# Start the server
+
+wsgiServer.start()
 while True:
-    print("Accepting connections")
-    conn, addr = s.accept()
-    conn.settimeout(TIMEOUT)
-    print("Accepted from", addr)
-
-    size = conn.recv_into(inbuf, MAXBUF)
-    print("Received", size, "bytes")
-    print(inbuf[:size])
-    first_line=inbuf[:size].decode().split('\r\n')[0]
-    if(first_line == "GET / HTTP/1.1"):
-      outbuf = b"HTTP/1.0 200 OK\r\n" + \
-              b"Connection: close\r\n" + \
-              b"\r\n" + \
-              b"<html>"+ web_page() + \
-              b"<hr><pre>" + \
-              inbuf[:size] + \
-              b"</pre></html>"
-
-    #elif():
-
-    else:
-        url=first_line.split(' ')[1]
-        print("URL:", url)
-        print("Broken Url:", circuitpython_parse.urlparse(url))
-        scheme, netloc, path, params, qs, fragment = circuitpython_parse.urlparse(url)
-        qs = circuitpython_parse.parse_qs(qs)
-        print(qs)
-
-        if(qs and "test" in qs.keys()):
-            test = qs["test"]
-            print(test)
-            print(test[0])
-
-            outbuf=b"HTTP/1.0 200 OK\r\n" + \
-              b"Connection: close\r\n" + \
-              b"\r\n" + \
-              b"<html>"+ web_page() + \
-              b"<hr style=\"background-color:rgba(0,0," +  bytes(str(255 * int(test[0])),'utf8') + b",1);\"><pre>" + \
-              inbuf[:size] + \
-              b"</pre></html>"
-
-        else:
-            outbuf = b"HTTP/1.0 404 Not Found\r\n" + \
-              b"Connection: close\r\n" + \
-              b"\r\n"
-
-    conn.send(outbuf)
-    print("Sent", outbuf.decode())
-    print("Sent", len(outbuf), "bytes")
-
-    conn.close()
+    # Our main loop where we have the server poll for incoming requests
+    #try:
+        wsgiServer.update_poll()
+        # Could do any other background tasks here, like reading sensors
+    # except (ValueError, RuntimeError) as e:
+    #     print("Failed to update server, restarting ESP32\n", e)
+    #     wifi.reset()
+    #     continue
 
 
-# the rest is exercise left for the reader, could try some socket stuff
-# (some examples at <https://github.com/anecdata/Socket>)
-# or anything else that's convenient to set up.
 
 print("Stopping the AP...")
 wifi.radio.stop_ap()  # close down the shop
-# </fin>
