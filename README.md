@@ -1,4 +1,10 @@
 # Dual engine Boat controlled by Wifi access point running on Adafruit QTPY ESP32-S2 and DRV8833 motor controller
+
+Creates access point running under "CircuitPython-AP", "password" and webpage under [http://192.168.4.1/](http://192.168.4.1/)
+
+You can fire test values using http://192.168.4.1/coords/0/0 (0's can be +/-100) or just use the joystick on the main page.
+There is an interface to the LED/Neopixel [http://192.168.4.1/led_on/&lt;r>/&lt;g>/&lt;b>/&lt;w>](http://192.168.4.1/led_on/15/10/20/1) (w is ignored but must be supplied, all values 0-255)
+
 ## See fritzing circuit
 ![fritzing circuit preview](https://raw.githubusercontent.com/tyeth/boat-drv8833-wifiAP/master/Circuit.png)
 
