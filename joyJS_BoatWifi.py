@@ -136,9 +136,9 @@ wifi.radio.stop_station()  # now the device is in NONE mode, neither Station nor
 # ** SETUP BOAT WIFI NAME **  Boat - Channel - Mac Address **
 # ***********************************************************
 wlan_mac = wifi.radio.mac_address_ap
-secrets["ssid"] = "BOAT-CH" + WIFI_CHANNEL + "-" + binascii.hexlify(wlan_mac).decode().upper() 
+secrets["ssid"] = "BOAT-CH" + str(WIFI_CHANNEL) + "-" + binascii.hexlify(wlan_mac).decode().upper() 
 
-print("Starting Access Point ", secrets["ssid"], " with password ", secrets["password"])
+print("Starting Access Point ", secrets["ssid"], " with password: ", secrets["password"])
 wifi.radio.start_ap(secrets["ssid"], secrets["password"],channel=WIFI_CHANNEL)
 
 
@@ -175,7 +175,7 @@ def engineAdjust(request,x,y):
 def pwmFrequencyAdjust(request,x):
     x_int = int(x)
     x_int = x_int if x_int!=0 else 50
-    pwm_a1.duty_cycle = pwm_a2.duty_cycle = pwm_b1.duty_cycle = pwm_b2.duty_cycle =min( max(1, x_int ), 500000)
+    pwm_a1.frequency = pwm_a2.frequency = pwm_b1.frequency = pwm_b2.frequency =min( max(1, x_int ), 500000)
     return ("200 OK", [], "window.pwmFrequencyValue = " + str(x_int) + "; /* Hz */" )
     
 
@@ -191,7 +191,7 @@ def index(request):
 HOST = repr(wifi.radio.ipv4_address if wifi.radio.ipv4_address else wifi.radio.ipv4_address_ap)
 PORT = 80  # Port to listen on
 wsgiServer = server.WSGIServer(PORT, application=web_app)
-print(HOST, PORT)
+#print(HOST, PORT)
 print("open this IP in your browser: ", wsgiServer.pretty_ip())
 
 
