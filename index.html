@@ -35,12 +35,33 @@
 {
 	box-sizing: border-box;
 }
+button{
+	margin: 5px;
+	padding: 15px;
+	align-self: center;
+}
 body
 {
 	margin: 0px;
 	padding: 0px;
 	font-family: monospace;
 }
+.row{
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	align-items: center;
+}
+@media screen and (min-width: 600px)
+{	
+	.row{
+		display: flex;
+		flex-direction: row;
+		justify-content: space-around;
+		align-items: center;
+	}
+}
+
 #joystick
 {
 	border: 1px solid #FF0000;
@@ -56,21 +77,39 @@ body
 		<button onclick="javascript:toggleAutoReturnToCenter()">Toggle RETURN TO CENTER</button>
 		<!-- Example of FIXED or ABSOLUTE position -->
 		<div id="joy3Div" style="width:60vw;height:60vh;margin:45px;"></div>
-		<div style="position:fixed;bottom:125px;left:180px;">
-			Posizione X:<input id="joy3PosizioneX" type="text" /><br />
-			Posizione Y:<input id="joy3PosizioneY" type="text" /><br />
-			Direzione:<input id="joy3Direzione" type="text" /><br />
-			X :<input id="joy3X" type="text" /></br>
-			Y :<input id="joy3Y" type="text" />
-		</div>
 		
-		<div height="100" width="100" id="iframe1"></div>
+		<div class="row">
+			
+			<div id="iframe1"></div>
+			
+			<div style="">  <!--position:fixed;bottom:125px;left:180px;"> -->
+				Position X:<input id="joy3PosizioneX" type="text" /><br />
+				Position Y:<input id="joy3PosizioneY" type="text" /><br />
+				Heading:<input id="joy3Direzione" type="text" /><br />
+				X (+/-100):<input id="joy3X" type="text" /></br>
+				Y (+/-100):<input id="joy3Y" type="text" />
+			</div>
+		
+			<div class="form-group">
+				<label for="joyPWM">PWM frequency</label><wbr/>
+				<input type="number" class="form-control" id="joyPWM" placeholder="PWM Value in Hertz" title="PWM Hz - ESP32 1-500000, default 500 (50 here), other µCs vary so check adafruit guide">
+
+				<br/>
+				<label for="buttonPWM" id="joyPWMlastSent"></label><br/>
+				<button onclick="javascript:setPWM()" class="btn btn-primary">Update PWM</button>
+			</div>
+			
+		</div>
 		<script type="text/javascript" defer="defer">
 			function init(){
-
-				var joy3Param = { "title": "joystick3", "autoReturnToCenter": window.autoReturnToCenter || true  };
+				
+				var joy3Param = { "title": "joystick3", "autoReturnToCenter": window.autoReturnToCenter==undefined ? true : window.autoReturnToCenter };
 				var Joy3 = new JoyStick('joy3Div', joy3Param);
 
+				var joyPWM=document.getElementById("joyPWM");
+				joyPWM.value = 50;
+				joyPWM.minValue = 1;
+				joyPWM.maxValue=500000;
 				var joy3IinputPosX = document.getElementById("joy3PosizioneX");
 				var joy3InputPosY = document.getElementById("joy3PosizioneY");
 				var joy3Direzione = document.getElementById("joy3Direzione");
@@ -97,10 +136,24 @@ body
 			init();
 
 			function toggleAutoReturnToCenter(){
-				window.autoReturnToCenter = !window.autoReturnToCenter || false;
+				window.autoReturnToCenter = window.autoReturnToCenter==undefined ? false : window.autoReturnToCenter;
 				clearInterval(window.joyInterval);
 				document.getElementById("joy3Div").innerHTML="";
 				init();
+			}
+
+			function setPWM(){
+				let joyPWM=document.getElementById("joyPWM");
+				let pwm = joyPWM.value;
+				let xhr=new XMLHttpRequest();
+				xhr.open("GET", "/pwm/"+pwm, true);
+				xhr.onerror=function(){
+					document.getElementById("joyPWMlastSent").innerHTML="Error updating PWM value";
+				}
+				xhr.onloadend(function(){
+					document.getElementById("joyPWMlastSent").innerHTML="PWM value updated to "+pwm;
+				});
+				xhr.send();
 			}
 		</script>
 	</body>

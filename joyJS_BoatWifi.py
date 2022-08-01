@@ -3,11 +3,15 @@
 
 ## USES wsgiserver for circuitpython7.x from https://github.com/tyeth/circuitpython-native-wsgiserver/suites/7591102025/artifacts/314407175
 
+WIFI_CHANNEL = 12  # change this, 11 and below is required for non-UK, or up to 13 for UK.
+
 import pwmio
 import board
 import busio
 from digitalio import DigitalInOut
 import neopixel
+
+import binascii
 
 import adafruit_motor.motor as motor
 
@@ -128,7 +132,14 @@ wifi.radio.stop_station()  # now the device is in NONE mode, neither Station nor
 # print("(Re-)Starting the station...")
 # wifi.radio.start_station()  # would restart the station and later you would have both Station and AP running
 
-wifi.radio.start_ap(secrets["ssid"], secrets["password"],channel=12)
+# ***********************************************************
+# ** SETUP BOAT WIFI NAME **  Boat - Channel - Mac Address **
+# ***********************************************************
+wlan_mac = wifi.radio.mac_address_ap
+secrets["ssid"] = "BOAT-CH" + WIFI_CHANNEL + "-" + binascii.hexlify(wlan_mac).decode().upper() 
+
+print("Starting Access Point ", secrets["ssid"], " with password ", secrets["password"])
+wifi.radio.start_ap(secrets["ssid"], secrets["password"],channel=WIFI_CHANNEL)
 
 
 ## To you want to create an un-protected WIFI hotspot to connect to with secrets:"
@@ -144,20 +155,28 @@ web_app = WSGIApp()
 
 @web_app.route("/led_on/<r>/<g>/<b>/<w>")
 def led_on(request, r, g, b, w):  # pylint: disable=unused-argument
-    print("led on!")
+    #print("led on!")
     status_light.fill((int(r), int(g), int(b),1))
     return ("200 OK", [], "led on!")
 
 
 @web_app.route("/led_off")
 def led_off(request):  # pylint: disable=unused-argument
-    print("led off!")
+    #print("led off!")
     status_light.fill(0)
     return ("200 OK", [], "led off!")
 
 @web_app.route("/coords/<x>/<y>")
 def engineAdjust(request,x,y):
     return adjustMotors(x,y)
+    
+
+@web_app.route("/pwm/<x>")
+def pwmFrequencyAdjust(request,x):
+    x_int = int(x)
+    x_int = x_int if x_int!=0 else 50
+    pwm_a1.duty_cycle = pwm_a2.duty_cycle = pwm_b1.duty_cycle = pwm_b2.duty_cycle =min( max(1, x_int ), 500000)
+    return ("200 OK", [], "window.pwmFrequencyValue = " + str(x_int) + "; /* Hz */" )
     
 
 @web_app.route("/", methods=["GET"])
