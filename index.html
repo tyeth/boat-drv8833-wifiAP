@@ -150,9 +150,9 @@ body
 				xhr.onerror=function(){
 					document.getElementById("joyPWMlastSent").innerHTML="Error updating PWM value";
 				}
-				xhr.onloadend(function(){
+				xhr.onloadend=function(){
 					document.getElementById("joyPWMlastSent").innerHTML="PWM value updated to "+pwm;
-				});
+				};
 				xhr.send();
 			}
 		</script>

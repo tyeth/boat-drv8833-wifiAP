@@ -34,10 +34,10 @@ secrets["password"]="password"
 #     print("WiFi secrets are kept in secrets.py, please add them there!")
 #     raise
 
-pwm_a1 = pwmio.PWMOut(board.MOSI, frequency=50)
-pwm_a2 = pwmio.PWMOut(board.MISO, frequency=50)
-pwm_b1 = pwmio.PWMOut(board.SCK, frequency=50)
-pwm_b2 = pwmio.PWMOut(board.RX, frequency=50)
+pwm_a1 = pwmio.PWMOut(board.MOSI, frequency=50, variable_frequency=True)
+pwm_a2 = pwmio.PWMOut(board.MISO, frequency=50, variable_frequency=True)
+pwm_b1 = pwmio.PWMOut(board.SCK, frequency=50, variable_frequency=True)
+pwm_b2 = pwmio.PWMOut(board.RX, frequency=50, variable_frequency=True)
 
 m1 = motor.DCMotor(pwm_a1, pwm_a2)
 m2 = motor.DCMotor(pwm_b1, pwm_b2)
@@ -175,7 +175,11 @@ def engineAdjust(request,x,y):
 def pwmFrequencyAdjust(request,x):
     x_int = int(x)
     x_int = x_int if x_int!=0 else 50
-    pwm_a1.frequency = pwm_a2.frequency = pwm_b1.frequency = pwm_b2.frequency =min( max(1, x_int ), 500000)
+    x_int = min( max(1, x_int ), 500000)
+    pwm_a1.frequency = x_int
+    pwm_a2.frequency = x_int
+    pwm_b1.frequency = x_int
+    pwm_b2.frequency = x_int
     return ("200 OK", [], "window.pwmFrequencyValue = " + str(x_int) + "; /* Hz */" )
     
 
