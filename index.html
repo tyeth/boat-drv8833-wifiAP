@@ -136,7 +136,7 @@ body
 			init();
 
 			function toggleAutoReturnToCenter(){
-				window.autoReturnToCenter = window.autoReturnToCenter==undefined ? false : window.autoReturnToCenter;
+				window.autoReturnToCenter = window.autoReturnToCenter==undefined ? false : !window.autoReturnToCenter;
 				clearInterval(window.joyInterval);
 				document.getElementById("joy3Div").innerHTML="";
 				init();
