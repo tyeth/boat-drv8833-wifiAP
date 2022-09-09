@@ -1,0 +1,190 @@
+<!DOCTYPE HTML>
+<!--
+ The MIT License (MIT)
+
+ This file is part of the JoyStick Project (https://github.com/bobboteck/JoyStick).
+ Copyright (c) 2015 Roberto D'Amico (Bobboteck).
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+-->
+<html>
+	<head>
+		<title>Joy</title>
+		<meta charset="utf-8">
+		<meta name="description" content="Example page of use pure Javascript JoyStick">
+		<meta name="author" content="Roberto D'Amico">
+		<meta name="viewport" content="user-scalable=0, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+
+		<!-- <link rel="shortcut icon" type="image/png" href="https://bobboteck.github.io/img/roberto-damico-bobboteck.png"> -->
+		<style>
+*
+{
+	box-sizing: border-box;
+}
+			
+			.twin-range {
+			}
+			input#left_range,
+			input#right_range{
+				/*transform: rotate(-90deg);*/
+				
+				transform: scaleX(6) scaleY(2) rotate(-90deg);
+				margin-top:300px;
+				/*min-height: 300px;*/
+			}
+			input#left_range{
+				min-width: 300px;
+			}
+			input#right_range{
+				min-width: 300px;
+			}
+			
+			
+button{
+	margin: 5px;
+	padding: 15px;
+	align-self: center;
+}
+body
+{
+	margin: 0px;
+	padding: 0px;
+	font-family: monospace;
+}
+.row{
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	align-items: center;
+}
+@media screen and (min-width: 600px)
+{	
+	.row{
+		display: flex;
+		flex-direction: row;
+		justify-content: space-around;
+		align-items: center;
+	}
+}
+
+#joystick
+{
+	border: 1px solid #FF0000;
+}
+#joystick3
+{
+	border: 1px solid #FF00FF;
+}
+		</style>
+		<script src="joy.js"></script>
+	</head>
+	<body>
+		<div class="row">
+			<div class="twin-range">
+				  <input type="range" min="-100" max="100" name="left_range" id="left_range" value="0" />
+				  <input type="range" min="-100" max="100" name="right_range" value="0" id="right_range" />
+			</div>
+		<button onclick="javascript:toggleAutoReturnToCenter()">Toggle RETURN TO CENTER</button>
+		</div>
+		<!-- Example of FIXED or ABSOLUTE position -->
+    
+    <div id="joy3Div" style="width:60vw;height:60vh;margin:45px;"></div>
+<div class="row">
+			
+  <div id="iframe1"></div>
+<div style="">  <!--position:fixed;bottom:125px;left:180px;"> -->
+		Position X:<input id="joy3PosizioneX" type="text" /><br />
+				Position Y:<input id="joy3PosizioneY" type="text" /><br />
+				Heading:<input id="joy3Direzione" type="text" /><br />
+				X (+/-100):<input id="joy3X" type="text" /></br>
+				Y (+/-100):<input id="joy3Y" type="text" />
+			</div>
+		
+			<div class="form-group">
+				<label for="joyPWM">PWM frequency</label><wbr/>
+				<input type="number" class="form-control" id="joyPWM" placeholder="PWM Value in Hertz" title="PWM Hz - ESP32 1-500000, default 500 (50 here), other µCs vary so check adafruit guide">
+
+				<br/>
+				<label for="buttonPWM" id="joyPWMlastSent"></label><br/>
+				<button onclick="javascript:setPWM()" class="btn btn-primary">Update PWM</button>
+			</div>
+			
+		</div>
+		<script type="text/javascript" defer="defer">
+			function init(){
+				var joyDiv = document.getElementById('joy3Div'); 
+				var smallestDimension = Math.min(joyDiv.clientHeight,joyDiv.clientWidth);
+				joyDiv.style.width=smallestDimension + "px";
+				joyDiv.style.height=smallestDimension + "px";
+				
+				var joy3Param = { "title": "joystick3", "autoReturnToCenter": window.autoReturnToCenter==undefined ? true : window.autoReturnToCenter };
+				var Joy3 = new JoyStick('joy3Div', joy3Param);
+
+				var joyPWM=document.getElementById("joyPWM");
+				joyPWM.value = 50;
+				joyPWM.minValue = 1;
+				joyPWM.maxValue=500000;
+				var joy3IinputPosX = document.getElementById("joy3PosizioneX");
+				var joy3InputPosY = document.getElementById("joy3PosizioneY");
+				var joy3Direzione = document.getElementById("joy3Direzione");
+				var joy3X = document.getElementById("joy3X");
+				var joy3Y = document.getElementById("joy3Y");
+				var iframe1 = document.getElementById("iframe1");
+
+				window.joyInterval = setInterval(function(){ 
+					joy3IinputPosX.value=Joy3.GetPosX(); 
+					joy3InputPosY.value=Joy3.GetPosY(); 
+					joy3Direzione.value=Joy3.GetDir(); 
+					oldXY = {x: joy3X.value, y: joy3Y.value};
+					joy3X.value=Joy3.GetX();
+					joy3Y.value=Joy3.GetY();
+					if(oldXY.x!=joy3X.value || oldXY.y!=joy3Y.value){
+						if(iframe1.children.length>0)iframe1.children[0].remove();
+						let iframe = document.createElement("iframe");
+						iframe.src="/coords/"+Joy3.GetX()+"/"+Joy3.GetY();
+						iframe1.appendChild(iframe);
+
+					}
+				}, 250);
+			}
+			init();
+
+			function toggleAutoReturnToCenter(){
+				window.autoReturnToCenter = window.autoReturnToCenter==undefined ? false : !window.autoReturnToCenter;
+				clearInterval(window.joyInterval);
+				document.getElementById("joy3Div").innerHTML="";
+				init();
+			}
+
+			function setPWM(){
+				let joyPWM=document.getElementById("joyPWM");
+				let pwm = joyPWM.value;
+				let xhr=new XMLHttpRequest();
+				xhr.open("GET", "/pwm/"+pwm, true);
+				xhr.onerror=function(){
+					document.getElementById("joyPWMlastSent").innerHTML="Error updating PWM value";
+				}
+				xhr.onloadend=function(){
+					document.getElementById("joyPWMlastSent").innerHTML="PWM value updated to "+pwm;
+				};
+				xhr.send();
+			}
+		</script>
+	</body>
+</html>
