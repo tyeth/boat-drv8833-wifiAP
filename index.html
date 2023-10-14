@@ -102,10 +102,6 @@ body
 		</div>
 		<script type="text/javascript" defer="defer">
 			function init(){
-				var joyDiv = document.getElementById('joy3Div'); 
-				var smallestDimension = Math.min(joyDiv.clientHeight,joyDiv.clientWidth);
-				joyDiv.style.width=smallestDimension + "px";
-				joyDiv.style.height=smallestDimension + "px";
 				
 				var joy3Param = { "title": "joystick3", "autoReturnToCenter": window.autoReturnToCenter==undefined ? true : window.autoReturnToCenter };
 				var Joy3 = new JoyStick('joy3Div', joy3Param);
@@ -140,7 +136,7 @@ body
 			init();
 
 			function toggleAutoReturnToCenter(){
-				window.autoReturnToCenter = window.autoReturnToCenter==undefined ? false : !window.autoReturnToCenter;
+				window.autoReturnToCenter = window.autoReturnToCenter==undefined ? false : window.autoReturnToCenter;
 				clearInterval(window.joyInterval);
 				document.getElementById("joy3Div").innerHTML="";
 				init();
